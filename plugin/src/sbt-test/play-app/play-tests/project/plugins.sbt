@@ -10,4 +10,4 @@ resolvers += "bintray-maven-michaelallen" at "https://dl.bintray.com/michaelalle
 // The Play plugin
 addSbtPlugin("com.typesafe.play" % "sbt-plugin" % "2.3.3")
 
-addSbtPlugin("io.michaelallen.mustache" %% "sbt-mustache" % sys.props("project.version"))
+addSbtPlugin("io.michaelallen.mustache" % "sbt-mustache_2.11" % sys.props("project.version"))

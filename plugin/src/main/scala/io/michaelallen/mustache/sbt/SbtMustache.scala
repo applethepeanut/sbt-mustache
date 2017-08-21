@@ -70,7 +70,7 @@ object SbtMustache extends AutoPlugin {
 
   def dependencySettings: Seq[Setting[_]] = Seq(
     apiVersion := readResourceProperty("mustache.version.properties", "mustache.api.version"),
-    libraryDependencies += "io.michaelallen.mustache" %% "sbt-mustache-api" % apiVersion.value
+    libraryDependencies += "io.michaelallen.mustache" % "sbt-mustache-api_2.11" % apiVersion.value
   )
 
   def readResourceProperty(resource: String, property: String): String = {

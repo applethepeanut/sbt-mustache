@@ -1,11 +1,15 @@
 import bintray.Keys._
 
+val releaseVersion = "0.4-SNAPSHOT"
+val scalatestVersion = "3.0.4"
+val logbackClassicVersion = "1.2.3"
+
 lazy val `sbt-mustache` = project
   .in(file("."))
   .aggregate(generator, api, plugin)
-  .settings(commonSettings:_*)
-  .settings(crossScala:_*)
-  .settings(noPublish:_*)
+  .settings(commonSettings: _*)
+  .settings(crossScala: _*)
+  .settings(noPublish: _*)
 
 //Compiles and Renders Mustache html templates
 lazy val api = project
@@ -16,9 +20,10 @@ lazy val api = project
   .settings(
     name := "sbt-mustache-api",
     libraryDependencies ++= Seq(
-      scalaTest(scalaBinaryVersion.value),
-      logger(),
-      "com.github.spullara.mustache.java" % "compiler" % "0.8.15"
+      "org.scalatest" %% "scalatest" % scalatestVersion % "test",
+      "ch.qos.logback" % "logback-classic" % logbackClassicVersion,
+      "com.github.spullara.mustache.java" % "scala-extensions-2.11" % "0.9.5",
+      "com.github.spullara.mustache.java" % "compiler" % "0.9.5"
     ),
     initLoggerInTests()
   )
@@ -33,10 +38,10 @@ lazy val generator = project
   .settings(
     name := "sbt-mustache-generator",
     libraryDependencies ++= Seq(
-      scalaCompiler(scalaVersion.value),
-      scalaTest(scalaBinaryVersion.value),
-      logger(),
-      "org.scala-sbt" % "io" % "0.13.5"
+      "org.scalatest" %% "scalatest" % scalatestVersion % "test",
+      "ch.qos.logback" % "logback-classic" % logbackClassicVersion,
+      "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+      "org.scala-sbt" % "io" % "0.13.8"
     ),
     fork in run := true,
     initLoggerInTests()
@@ -44,29 +49,30 @@ lazy val generator = project
 
 lazy val plugin = project
   .in(file("plugin"))
-  .dependsOn(generator)
   .settings(commonSettings: _*)
   .settings(crossScala: _*)
   .settings(publishSbtPlugin: _*)
   .settings(scriptedSettings: _*)
   .settings(
     name := "sbt-mustache",
+    scalaVersion := "2.10.6",
     scriptedLaunchOpts += ("-Dproject.version=" + version.value),
     scriptedLaunchOpts += "-XX:MaxPermSize=256m",
     scriptedBufferLog := false,
     sbtPlugin := true,
-    resourceGenerators in Compile <+= generateVersionFile
+    resourceGenerators in Compile <+= generateVersionFile,
+    libraryDependencies ++= Seq(
+      "io.michaelallen.mustache" % "sbt-mustache-generator_2.11" % releaseVersion
+    )
   )
 
-def commonSettings = {
-  Seq(
-    organization := "io.michaelallen.mustache",
-    version := "0.3-SNAPSHOT",
-    scalaVersion := sys.props.get("scala.version").getOrElse("2.10.4"),
-    scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8"),
-    resolvers += Resolver.mavenLocal
-  )
-}
+def commonSettings = Seq(
+  organization := "io.michaelallen.mustache",
+  version := releaseVersion,
+  scalaVersion := sys.props.get("scala.version").getOrElse("2.11.8"),
+  scalacOptions := Seq("-unchecked", "-deprecation", "-encoding", "utf8"),
+  resolvers += Resolver.mavenLocal
+)
 
 def noPublish = Seq(
   publish := {},
@@ -92,13 +98,13 @@ def publishMaven = bintrayPublishSettings ++ Seq(
       <url>https://github.com/michaeldfallen/sbt-mustache</url>
       <connection>scm:git:git@github.com:michaeldfallen/sbt-mustache.git</connection>
     </scm>
-    <developers>
-      <developer>
-        <id>michaeldfallen</id>
-        <name>Michael Allen</name>
-        <url>https://github.com/michaeldfallen</url>
-      </developer>
-    </developers>
+      <developers>
+        <developer>
+          <id>michaeldfallen</id>
+          <name>Michael Allen</name>
+          <url>https://github.com/michaeldfallen</url>
+        </developer>
+      </developers>
   },
   pomIncludeRepository := { _ => false }
 )
@@ -112,29 +118,15 @@ def generateVersionFile = Def.task {
 }
 
 def crossScala = Seq(
-  crossScalaVersions := Seq("2.10.4"),
+  crossScalaVersions := Seq(scalaVersion.value),
   unmanagedSourceDirectories in Compile += {
     (sourceDirectory in Compile).value / ("scala-" + scalaBinaryVersion.value)
   }
 )
 
-def scalaCompiler(version: String) = {
-  "org.scala-lang" % "scala-compiler" % version
-}
-
-def scalaTest(version: String) = version match {
-  case "2.10" => "org.scalatest" %% "scalatest" % "2.2.0" % "test"
-}
-
-def logger() = {
-  "ch.qos.logback" % "logback-classic" % "1.0.1"
-}
-
-def initLoggerInTests() = {
-  testOptions in Test += Tests.Setup(classLoader =>
-    classLoader
-      .loadClass("org.slf4j.LoggerFactory")
-      .getMethod("getLogger", classLoader.loadClass("java.lang.String"))
-      .invoke(null, "ROOT")
-  )
-}
+def initLoggerInTests() = testOptions in Test += Tests.Setup(classLoader =>
+  classLoader
+    .loadClass("org.slf4j.LoggerFactory")
+    .getMethod("getLogger", classLoader.loadClass("java.lang.String"))
+    .invoke(null, "ROOT")
+)

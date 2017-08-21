@@ -1,7 +1,7 @@
 package io.michaelallen.mustache.api
 
 import io.michaelallen.mustache.test._
-import java.io.{Reader, StringReader}
+import java.io.{FileNotFoundException, Reader, StringReader}
 
 class MustacheCompilerTests extends UnitSpec {
 
@@ -25,7 +25,7 @@ class MustacheCompilerTests extends UnitSpec {
     val compiler = new MustacheCompiler {
       override val mustacheDir = "mustache"
     }
-    a [com.github.mustachejava.MustacheException] should be thrownBy {
+    a [FileNotFoundException] should be thrownBy {
       compiler.compile("baz")
     }
   }
